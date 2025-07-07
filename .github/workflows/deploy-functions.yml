@@ -93,10 +93,11 @@ jobs:
           cd functions
           npm install --no-save firebase-tools
 
-      - name: Create Firebase service account file
-        run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > functions/firebase-service-account.json
-      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+
       - name: Create Environment file
         run: |
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" > functions/.env
@@ -113,4 +114,4 @@ jobs:
       - name: Deploy to Firebase
         run: |
           cd functions
-          npx firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }}
+          npx firebase deploy --only functions
