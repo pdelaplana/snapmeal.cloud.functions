@@ -7,7 +7,10 @@ import type { Job } from '../types/jobTypes';
 export const queueJob = onCall(async (request) => {
   // Check if user is authenticated
   if (request?.auth === null) {
-    throw new HttpsError('unauthenticated', 'User must be authenticated to use this function.');
+    throw new HttpsError(
+      'unauthenticated',
+      'User must be authenticated to use this function.'
+    );
   }
 
   if (!request.data.jobType) {
@@ -58,8 +61,11 @@ export const queueJob = onCall(async (request) => {
       } catch (error) {
         Sentry.captureException(error);
 
-        throw new HttpsError('internal', `Error adding task to queue: ${error}`);
+        throw new HttpsError(
+          'internal',
+          `Error adding task to queue: ${error}`
+        );
       }
-    },
+    }
   );
 });

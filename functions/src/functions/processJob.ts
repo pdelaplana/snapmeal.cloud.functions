@@ -27,10 +27,16 @@ export const processJob = onDocumentCreated('jobs/{jobId}', async (event) => {
       // Process the job based on its type
       switch (job.jobType) {
         case 'exportData':
-          result = await exportData({ userId: job.userId, userEmail: job.userEmail });
+          result = await exportData({
+            userId: job.userId,
+            userEmail: job.userEmail,
+          });
           break;
         case 'deleteAccount':
-          result = await deleteAccount({ userId: job.userId, userEmail: job.userEmail });
+          result = await deleteAccount({
+            userId: job.userId,
+            userEmail: job.userEmail,
+          });
           break;
         default:
           console.error(`Unknown job type: ${job.jobType}`);
@@ -55,6 +61,6 @@ export const processJob = onDocumentCreated('jobs/{jobId}', async (event) => {
       }
 
       return null;
-    },
+    }
   );
 });

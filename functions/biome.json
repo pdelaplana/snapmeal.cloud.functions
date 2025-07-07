@@ -25,19 +25,28 @@
     "lineEnding": "lf",
     "lineWidth": 80,
     "attributePosition": "auto",
-    "ignore": ["lib/**/*", "generated/**/*"]
+    "ignore": [
+      "lib/**/*",
+      "generated/**/*"
+    ]
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "double",
-      "jsxQuoteStyle": "double",
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "single",
       "quoteProperties": "asNeeded",
       "semicolons": "always",
       "trailingCommas": "es5"
     }
   },
   "files": {
-    "include": ["src/**/*"],
-    "ignore": ["lib/**/*", "generated/**/*", "node_modules/**/*"]
+    "include": [
+      "src/**/*"
+    ],
+    "ignore": [
+      "lib/**/*",
+      "generated/**/*",
+      "node_modules/**/*"
+    ]
   }
 }

@@ -18,7 +18,9 @@ export async function sendEmailNotification(mailOptions: MailOptions) {
   };
 
   // Create the transporter with Mailgun configuration
-  const transporter = nodemailer.createTransport(mailGunTransport(mailgunConfig));
+  const transporter = nodemailer.createTransport(
+    mailGunTransport(mailgunConfig)
+  );
 
   return transporter.sendMail(mailOptions);
 }

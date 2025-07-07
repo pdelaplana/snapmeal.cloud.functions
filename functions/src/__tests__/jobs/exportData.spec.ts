@@ -99,17 +99,22 @@ describe('exportData job', () => {
 
     // Setup storage mock
     (admin.storage as jest.Mock).mockReturnValue({
-      bucket: jest.fn((bucketName) => bucket),
+      bucket: jest.fn(() => bucket),
     });
   });
 
   it('should successfully export data', async () => {
     // Call the function
-    const result = await exportData({ userId: 'user1', userEmail: 'user@example.com' });
+    const result = await exportData({
+      userId: 'user1',
+      userEmail: 'user@example.com',
+    });
 
     // Verify admin.firestore was called correctly
     expect(admin.firestore().collection).toHaveBeenCalledWith('users');
-    expect(admin.firestore().collection('users').doc).toHaveBeenCalledWith('user1');
+    expect(admin.firestore().collection('users').doc).toHaveBeenCalledWith(
+      'user1'
+    );
 
     // Verify Firestore queries
     expect(mockAccountRef.collection).toHaveBeenCalledWith('meals');
@@ -121,14 +126,16 @@ describe('exportData job', () => {
     // Verify storage operations
     expect(admin.storage().bucket).toHaveBeenCalled();
     expect(admin.storage().bucket().upload).toHaveBeenCalled();
-    expect(admin.storage().bucket().file).toHaveBeenCalledWith(expect.stringMatching(/users\/user1\/exports\/meals-.*\.csv/));
+    expect(admin.storage().bucket().file).toHaveBeenCalledWith(
+      expect.stringMatching(/users\/user1\/exports\/meals-.*\.csv/)
+    );
 
     // Verify email sent
     expect(sendEmailNotification).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'user@example.com',
         subject: 'Your data export is ready',
-      }),
+      })
     );
 
     // Verify successful result
@@ -140,9 +147,9 @@ describe('exportData job', () => {
   });
 
   it('should handle missing userId', async () => {
-    await expect(exportData({ userId: '', userEmail: 'user@example.com' })).rejects.toThrow(
-      'User ID is required.',
-    );
+    await expect(
+      exportData({ userId: '', userEmail: 'user@example.com' })
+    ).rejects.toThrow('User ID is required.');
   });
 
   it('should handle no meals data', async () => {
@@ -155,7 +162,10 @@ describe('exportData job', () => {
     });
 
     // Call the function
-    const result = await exportData({ userId: 'user1', userEmail: 'user@example.com' });
+    const result = await exportData({
+      userId: 'user1',
+      userEmail: 'user@example.com',
+    });
 
     // Should fail with appropriate message
     expect(result).toEqual({
@@ -171,7 +181,10 @@ describe('exportData job', () => {
     });
 
     // Call the function
-    const result = await exportData({ userId: 'user1', userEmail: 'user@example.com' });
+    const result = await exportData({
+      userId: 'user1',
+      userEmail: 'user@example.com',
+    });
 
     // Should return failure
     expect(result).toEqual({
