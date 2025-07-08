@@ -114,4 +114,4 @@ jobs:
       - name: Deploy to Firebase
         run: |
           cd functions
-          npx firebase deploy --only functions
+          npx firebase deploy --only functions --force
