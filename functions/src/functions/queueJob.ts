@@ -48,6 +48,10 @@ export const queueJob = onCall(async (request) => {
         };
 
         // Add to the tasks collection
+        admin.firestore().settings({ databaseId: 'development', timestampsInSnapshots: true });
+
+        console.log(`Database Id: ${admin.firestore().databaseId}`);
+        console.log(`Queueing job: ${JSON.stringify(job)}`);
         const jobRef = await admin.firestore().collection('jobs').add(job);
         const jobId = jobRef.id;
 

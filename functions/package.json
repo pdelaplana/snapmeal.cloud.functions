@@ -13,7 +13,8 @@
     "logs": "firebase functions:log",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:endpoints": "node ../test-deployed-functions.js"
   },
   "engines": {
     "node": "22"
