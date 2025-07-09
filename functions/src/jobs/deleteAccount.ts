@@ -1,6 +1,7 @@
 import Sentry from '@sentry/node';
 import admin from 'firebase-admin';
 import { params } from 'firebase-functions';
+import { db } from '../config/firebase';
 import { sendEmailNotification } from '../helpers/sendEmail';
 
 export const deleteAccount = async ({
@@ -16,7 +17,7 @@ export const deleteAccount = async ({
 
       try {
         // Get a reference to the account document
-        const userRef = admin.firestore().collection('users').doc(userId);
+        const userRef = db.collection('users').doc(userId);
 
         // Get account data before deletion (for audit/confirmation purposes)
         const userSnapshot = await userRef.get();

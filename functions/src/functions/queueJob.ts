@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node';
 import * as admin from 'firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { db } from '../config/firebase';
 import type { Job } from '../types/jobTypes';
 
 export const queueJob = onCall(async (request) => {
@@ -51,7 +52,7 @@ export const queueJob = onCall(async (request) => {
 
         console.log(`Database Id: ${admin.firestore().databaseId}`);
         console.log(`Queueing job: ${JSON.stringify(job)}`);
-        const jobRef = await admin.firestore().collection('jobs').add(job);
+        const jobRef = await db.collection('jobs').add(job);
         const jobId = jobRef.id;
 
         console.log(`Task queued: ${jobId} (Type: ${jobType})`);

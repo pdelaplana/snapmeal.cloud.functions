@@ -10,6 +10,7 @@ const getDatabaseId = (): string => {
       return 'development';
     case 'staging':
       return 'staging';
+    case 'production':
     default:
       return '(default)'; // Default Firestore database
   }
@@ -17,33 +18,39 @@ const getDatabaseId = (): string => {
 
 // Initialize Firebase Admin SDK
 try {
-  // In production/CI environment, use service account from env or file
   if (fs.existsSync('./firebase-service-account.json')) {
     admin.initializeApp({
       credential: admin.credential.cert('./firebase-service-account.json'),
     });
   } else {
-    // Default initialization for production environment
     admin.initializeApp();
   }
 
   const databaseId = getDatabaseId();
-  console.log(
-    `Firebase Admin SDK initialized successfully with database: ${databaseId}`
-  );
+  console.log(`Firebase Admin SDK initialized successfully with database: ${databaseId}`);
 } catch (error) {
   console.error('Error initializing Firebase Admin SDK:', error);
   throw error;
 }
 
-// Export Firestore instance
-export const db = admin.firestore();
+// For multiple databases in the same project, you need to:
+// 1. Create additional databases in Firebase Console
+// 2. Use the correct API to reference them
 
-// Configure Firestore settings (optional)
+const databaseId = getDatabaseId();
+
+// Method 1: Using firebase-admin v11+ with multiple databases
+export const db = databaseId === '(default)'
+  ? admin.firestore()
+  : admin.app().firestore(databaseId);
+
+// Method 2: Alternative approach (if above doesn't work)
+// export const db = admin.firestore();
+// Then configure collections with database-specific prefixes
+
+// Configure Firestore settings
 db.settings({
-  databaseId: getDatabaseId(),
   ignoreUndefinedProperties: true,
 });
 
-// Export database ID for reference
-export const currentDatabaseId = getDatabaseId();
+export const currentDatabaseId = databaseId;

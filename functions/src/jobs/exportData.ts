@@ -7,6 +7,7 @@ import params from 'firebase-functions/params';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import { parse } from 'json2csv';
+import { db } from '../config/firebase';
 import { sendEmailNotification } from '../helpers/sendEmail';
 
 export const exportData = async ({
@@ -22,10 +23,7 @@ export const exportData = async ({
 
       try {
         // Validate collection name (you can add more validation as needed)
-        const userRef = admin
-          .firestore()
-          .collection('users')
-          .doc(userId ?? '');
+        const userRef = db.collection('users').doc(userId ?? '');
 
         if (!userRef) {
           throw new Error(`User Document for ID ${userId} not found.`);
