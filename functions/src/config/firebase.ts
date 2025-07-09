@@ -12,6 +12,11 @@ try {
     // Default initialization for production environment
     admin.initializeApp();
   }
+  // set Firestore settings
+  admin
+    .firestore()
+    .settings({ databaseId: 'development', timestampsInSnapshots: true });
+
   console.log('Firebase Admin SDK initialized successfully');
 } catch (error) {
   console.error('Error initializing Firebase Admin SDK:', error);
