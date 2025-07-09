@@ -2,6 +2,11 @@ import * as admin from 'firebase-admin';
 import { sendEmailNotification } from '../../helpers/sendEmail';
 import { deleteAccount } from '../../jobs/deleteAccount';
 
+// Mock node:fs
+jest.mock('node:fs', () => ({
+  existsSync: jest.fn().mockReturnValue(false), // Mock existsSync to return false (no service account file)
+}));
+
 // Mock firebase-admin
 jest.mock('firebase-admin', () => {
   const mockBucket = {

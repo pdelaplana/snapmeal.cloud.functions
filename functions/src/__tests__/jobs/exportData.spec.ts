@@ -23,6 +23,7 @@ jest.mock('firebase-admin', () => {
 jest.mock('node:fs', () => ({
   writeFileSync: jest.fn(),
   unlinkSync: jest.fn(),
+  existsSync: jest.fn().mockReturnValue(false), // Mock existsSync to return false (no service account file)
 }));
 
 jest.mock('../../helpers/sendEmail', () => ({
