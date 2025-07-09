@@ -57,7 +57,7 @@ describe('Endpoint Function Tests', () => {
     it('should handle different job types', () => {
       const validJobTypes = ['exportData', 'deleteAccount'];
 
-      validJobTypes.forEach((jobType) => {
+      for (const jobType of validJobTypes) {
         const jobData = {
           jobType,
           status: 'pending',
@@ -68,7 +68,7 @@ describe('Endpoint Function Tests', () => {
         expect(['pending', 'in-progress', 'completed', 'failed']).toContain(
           jobData.status
         );
-      });
+      }
     });
   });
 
@@ -156,8 +156,13 @@ describe('Endpoint Function Tests', () => {
         },
       };
 
+      interface RequestData {
+        jobType: string;
+        priority?: number;
+      }
+
       const defaultPriority =
-        (requestWithoutPriority.data as any).priority || 1;
+        (requestWithoutPriority.data as RequestData).priority || 1;
       expect(defaultPriority).toBe(1);
 
       const requestWithPriority = {
