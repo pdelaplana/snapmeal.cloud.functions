@@ -100,7 +100,7 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
 
-      - name: Create Environment file
+      - name: Create Environment file for build
         run: |
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" > functions/.env
           echo "ENVIRONMENT=${{ github.event.inputs.environment || 'production' }}" >> functions/.env
@@ -109,12 +109,15 @@ jobs:
           echo "MAILGUN_DOMAIN=${{ secrets.MAILGUN_DOMAIN }}" >> functions/.env
           echo "DATABASE_ID=${{ env.DATABASE_ID || 'development' }}" >> functions/.env
       
-      - name: Build functions
+      - name: Update runtime environment configuration
         run: |
           cd functions
-          npm run build
+          # Update .env.yaml with the DATABASE_ID for runtime
+          echo "DATABASE_ID: ${{ env.DATABASE_ID || 'development' }}" > .env.yaml
+          echo "ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}" >> .env.yaml
+          echo "DEBUG_MODE: ${{ github.event.inputs.debug_mode || 'false' }}" >> .env.yaml
       
-      - name: Deploy to Firebase
+      - name: Deploy to Firebase with environment variables
         run: |
           cd functions
           npx firebase deploy --only functions --force

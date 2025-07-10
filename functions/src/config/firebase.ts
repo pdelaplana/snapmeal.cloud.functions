@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin';
 
 // Get environment-specific database ID
 const getDatabaseId = (): string => {
-  return process.env.DATABASE_ID || '(default)'; // Default to '(default)' if not set
+  return process.env.DATABASE_ID || '(default)';
 };
 
 // Initialize Firebase Admin SDK
@@ -27,12 +27,18 @@ try {
   throw error;
 }
 
-// Export Firestore instance (always use default, but triggers will specify database)
+// Export Firestore instance with correct database selection
+const databaseId = getDatabaseId();
+
+// Create Firestore instance with the correct database
+// Note: For non-default databases, we need to configure this differently
+// The Firebase Admin SDK doesn't allow specifying database at instance creation
+// Instead, we configure the default database and use database-specific triggers
 export const db = admin.firestore();
 
 db.settings({
-  databaseId: getDatabaseId(),
+  databaseId: databaseId,
 });
 
 // Export database ID for reference
-export const currentDatabaseId = getDatabaseId();
+export const currentDatabaseId = databaseId;
