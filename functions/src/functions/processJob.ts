@@ -9,9 +9,7 @@ import type { Job } from '../types/jobTypes';
 
 // Create the trigger with environment-specific database
 const triggerOptions =
-  currentDatabaseId === '(default)'
-    ? { document: 'jobs/{jobId}' }
-    : { document: 'jobs/{jobId}', database: currentDatabaseId };
+   { document: 'jobs/{jobId}', database: 'development' };
 
 export const processJob = onDocumentCreated(triggerOptions, async (event) => {
   return Sentry.startSpan(
