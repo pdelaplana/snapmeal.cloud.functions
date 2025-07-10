@@ -3,16 +3,7 @@ import * as admin from 'firebase-admin';
 
 // Get environment-specific database ID
 const getDatabaseId = (): string => {
-  const environment = process.env.ENVIRONMENT || 'production';
-
-  switch (environment) {
-    case 'development':
-      return 'development';
-    case 'staging':
-      return 'staging';
-    default:
-      return '(default)'; // Default Firestore database
-  }
+  return process.env.DATABASE_ID || '(default)'; // Default to '(default)' if not set
 };
 
 // Initialize Firebase Admin SDK
@@ -36,13 +27,11 @@ try {
   throw error;
 }
 
-// Export Firestore instance
+// Export Firestore instance (always use default, but triggers will specify database)
 export const db = admin.firestore();
 
-// Configure Firestore settings (optional)
 db.settings({
-  databaseId: 'development',
-  ignoreUndefinedProperties: true,
+  databaseId: getDatabaseId(),
 });
 
 // Export database ID for reference

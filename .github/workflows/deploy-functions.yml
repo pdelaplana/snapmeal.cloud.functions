@@ -71,6 +71,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    env:
+      DATABASE_ID: 'development' # Default to development, can be overridden by secrets
     
     steps:
       - name: Checkout code
@@ -105,6 +107,7 @@ jobs:
           echo "DEBUG_MODE=${{ github.event.inputs.debug_mode || 'false' }}" >> functions/.env
           echo "MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }}" >> functions/.env
           echo "MAILGUN_DOMAIN=${{ secrets.MAILGUN_DOMAIN }}" >> functions/.env
+          echo "DATABASE_ID=${{ env.DATABASE_ID || 'development' }}" >> functions/.env
       
       - name: Build functions
         run: |
