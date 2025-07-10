@@ -100,7 +100,11 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
 
-      - name: Create Environment file for build
+      - name: Create Firebase service account file
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > functions/firebase-service-account.json
+
+      - name: Create Environment 
         run: |
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" > functions/.env
           echo "ENVIRONMENT=${{ github.event.inputs.environment || 'production' }}" >> functions/.env
@@ -109,15 +113,15 @@ jobs:
           echo "MAILGUN_DOMAIN=${{ secrets.MAILGUN_DOMAIN }}" >> functions/.env
           echo "DATABASE_ID=${{ env.DATABASE_ID || 'development' }}" >> functions/.env
       
-      - name: Update runtime environment configuration
-        run: |
-          cd functions
-          # Update .env.yaml with the DATABASE_ID for runtime
-          echo "DATABASE_ID: ${{ env.DATABASE_ID || 'development' }}" > .env.yaml
-          echo "ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}" >> .env.yaml
-          echo "DEBUG_MODE: ${{ github.event.inputs.debug_mode || 'false' }}" >> .env.yaml
-      
-      - name: Deploy to Firebase with environment variables
+      - name: Deploy to Firebase 
         run: |
           cd functions
           npx firebase deploy --only functions --force
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          DATABASE_ID: ${{ env.DATABASE_ID || 'development' }}
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
+          DEBUG_MODE: ${{ github.event.inputs.debug_mode || 'false' }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+          MAILGUN_DOMAIN: ${{ secrets.MAILGUN_DOMAIN }}
