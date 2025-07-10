@@ -12,7 +12,7 @@ try {
   if (fs.existsSync('./firebase-service-account.json')) {
     admin.initializeApp({
       credential: admin.credential.cert('./firebase-service-account.json'),
-    },);
+    });
   } else {
     // Default initialization for production environment
     admin.initializeApp();
@@ -39,7 +39,6 @@ export const db = admin.firestore();
 db.settings({
   databaseId: 'development',
 });
-
 
 // Export database ID for reference
 export const currentDatabaseId = databaseId;
