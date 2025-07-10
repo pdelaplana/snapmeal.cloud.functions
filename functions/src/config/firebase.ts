@@ -41,7 +41,7 @@ export const db = admin.firestore();
 
 // Configure Firestore settings (optional)
 db.settings({
-  databaseId: getDatabaseId(),
+  databaseId: 'development',
   ignoreUndefinedProperties: true,
 });
 
