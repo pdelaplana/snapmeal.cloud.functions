@@ -117,10 +117,3 @@ jobs:
         run: |
           cd functions
           npx firebase deploy --only functions --force
-        env:
-          DATABASE_ID: ${{ env.DATABASE_ID || 'development' }}
-          ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
-          DEBUG_MODE: ${{ github.event.inputs.debug_mode || 'false' }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
-          MAILGUN_DOMAIN: ${{ secrets.MAILGUN_DOMAIN }}
