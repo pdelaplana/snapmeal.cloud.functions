@@ -112,6 +112,11 @@ jobs:
           echo "MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }}" >> functions/.env
           echo "MAILGUN_DOMAIN=${{ secrets.MAILGUN_DOMAIN }}" >> functions/.env
           echo "DATABASE_ID=${{ env.DATABASE_ID || 'development' }}" >> functions/.env
+     
+      - name: Build functions
+        run: |
+          cd functions
+          npm run build
       
       - name: Deploy to Firebase 
         run: |
