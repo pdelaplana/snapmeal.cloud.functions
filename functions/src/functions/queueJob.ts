@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/node';
-import * as admin from 'firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { db } from '../config/firebase';
