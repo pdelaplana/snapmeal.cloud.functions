@@ -26,7 +26,7 @@ export const queueJob = onCall(async (request) => {
 
   const { jobType, priority, ...data } = request.data;
 
-  Sentry.startSpan(
+  return Sentry.startSpan(
     { name: 'queueJob', op: 'function.https.onCall', attributes: request.data },
     async () => {
       try {

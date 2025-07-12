@@ -149,8 +149,10 @@ class SimpleTester {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
+          console.log('Response received', data);
           try {
             const response = JSON.parse(data);
+            console.log('Response:', response);
             if (response.result?.success) {
               console.log('✅ Queue job successful');
               console.log(`   Job ID: ${response.result.jobId}`);
