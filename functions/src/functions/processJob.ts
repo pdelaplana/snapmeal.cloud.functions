@@ -5,9 +5,10 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { deleteAccount } from '../jobs/deleteAccount';
 import { exportData } from '../jobs/exportData';
 import type { Job } from '../types/jobTypes';
+import { currentDatabaseId } from '../config/firebase';
 
 // Create the trigger with environment-specific database
-const triggerOptions = { document: 'jobs/{jobId}', database: 'development' };
+const triggerOptions = { document: 'jobs/{jobId}', database: currentDatabaseId };
 
 export const processJob = onDocumentCreated(triggerOptions, async (event) => {
   return Sentry.startSpan(

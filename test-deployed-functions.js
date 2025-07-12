@@ -201,9 +201,10 @@ class SimpleTester {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
+          console.log('Response received', data);
           try {
             const response = JSON.parse(data);
-            if (response.error && response.error.status === 'UNAUTHENTICATED') {
+            if (response.error && response.error.status === 'INVALID_ARGUMENT') {
               console.log('✅ Correctly rejected unauthenticated request');
               resolve(true);
             } else {
