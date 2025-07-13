@@ -113,7 +113,7 @@ jobs:
           echo "MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }}" >> functions/.env
           echo "MAILGUN_DOMAIN=${{ secrets.MAILGUN_DOMAIN }}" >> functions/.env
           echo "DATABASE_ID=${{ env.DATABASE_ID || 'development' }}" >> functions/.env
-          ECHO "STORAGE_BUCKET=${{ env.STOREAGE_BUCKET }}" >> functions/.env
+          echo "STORAGE_BUCKET=${{ env.STOREAGE_BUCKET }}" >> functions/.env
      
       - name: Build functions
         run: |
