@@ -7,7 +7,7 @@ console.log(`Using environment variable STORAGE_BUCKET: ${process.env.STORAGE_BU
 
 // Get environment-specific database ID
 const getDatabaseId = (): string => {
-  return process.env.DATABASE_ID || 'development';
+  return process.env.DATABASE_ID || '(default)';
 };
 
 // Get database ID before initialization

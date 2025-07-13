@@ -73,7 +73,8 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     env:
       DATABASE_ID: 'development' # Default to development, can be overridden by secrets
-    
+      STOREAGE_BUCKET: 'snapmeal-sa2e9.firebasestorage.app' # Ensure this secret is set in GitHub Secrets
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -112,13 +113,16 @@ jobs:
           echo "MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }}" >> functions/.env
           echo "MAILGUN_DOMAIN=${{ secrets.MAILGUN_DOMAIN }}" >> functions/.env
           echo "DATABASE_ID=${{ env.DATABASE_ID || 'development' }}" >> functions/.env
+          ECHO "STORAGE_BUCKET=${{ env.STOREAGE_BUCKET }}" >> functions/.env
      
       - name: Build functions
         run: |
           cd functions
           npm run build
       
-      - name: Deploy to Firebase 
+      - name: Deploy to Firebase
+        env: 
+          DATABASE_ID: ${{ env.DATABASE_ID }}
         run: |
           cd functions
           npx firebase deploy --only functions --force
