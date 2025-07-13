@@ -56,7 +56,7 @@ export const exportData = async ({ userId, userEmail }: { userId: string; userEm
       fs.writeFileSync(tempFilePath, csv);
 
       // Upload to Firebase Storage
-      const defaultBucket = params.storageBucket?.value() || admin.storage().bucket().name;
+      const defaultBucket = params?.storageBucket?.value() || admin.storage().bucket().name;
       console.log('Default bucket:', defaultBucket);
       const bucket = admin.storage().bucket(defaultBucket);
       const storageFilePath = `users/${userId}/exports/meals-${timestamp}.csv`;
