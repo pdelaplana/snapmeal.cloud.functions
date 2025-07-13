@@ -113,9 +113,7 @@ describe('exportData job', () => {
 
     // Verify admin.firestore was called correctly
     expect(admin.firestore().collection).toHaveBeenCalledWith('users');
-    expect(admin.firestore().collection('users').doc).toHaveBeenCalledWith(
-      'user1'
-    );
+    expect(admin.firestore().collection('users').doc).toHaveBeenCalledWith('user1');
 
     // Verify Firestore queries
     expect(mockAccountRef.collection).toHaveBeenCalledWith('meals');
@@ -128,7 +126,7 @@ describe('exportData job', () => {
     expect(admin.storage().bucket).toHaveBeenCalled();
     expect(admin.storage().bucket().upload).toHaveBeenCalled();
     expect(admin.storage().bucket().file).toHaveBeenCalledWith(
-      expect.stringMatching(/users\/user1\/exports\/meals-.*\.csv/)
+      expect.stringMatching(/users\/user1\/exports\/meals-.*\.csv/),
     );
 
     // Verify email sent
@@ -136,7 +134,7 @@ describe('exportData job', () => {
       expect.objectContaining({
         to: 'user@example.com',
         subject: 'Your data export is ready',
-      })
+      }),
     );
 
     // Verify successful result
@@ -148,9 +146,9 @@ describe('exportData job', () => {
   });
 
   it('should handle missing userId', async () => {
-    await expect(
-      exportData({ userId: '', userEmail: 'user@example.com' })
-    ).rejects.toThrow('User ID is required.');
+    await expect(exportData({ userId: '', userEmail: 'user@example.com' })).rejects.toThrow(
+      'User ID is required.',
+    );
   });
 
   it('should handle no meals data', async () => {

@@ -135,9 +135,7 @@ describe('deleteAccount job', () => {
 
     // Verify account lookup
     expect(admin.firestore().collection).toHaveBeenCalledWith('users');
-    expect(admin.firestore().collection('users').doc).toHaveBeenCalledWith(
-      'user1'
-    );
+    expect(admin.firestore().collection('users').doc).toHaveBeenCalledWith('user1');
 
     // Verify subcollections were queried
     expect(mockUserDocRef.collection).toHaveBeenCalledWith('meals');
@@ -161,7 +159,7 @@ describe('deleteAccount job', () => {
       expect.objectContaining({
         to: 'user@example.com',
         subject: 'Your account has been deleted',
-      })
+      }),
     );
 
     // Verify successful result
@@ -173,9 +171,9 @@ describe('deleteAccount job', () => {
   });
 
   it('should handle missing userId', async () => {
-    await expect(
-      deleteAccount({ userId: '', userEmail: 'user@example.com' })
-    ).rejects.toThrow('User ID is required.');
+    await expect(deleteAccount({ userId: '', userEmail: 'user@example.com' })).rejects.toThrow(
+      'User ID is required.',
+    );
   });
 
   it('should handle non-existent account', async () => {
@@ -193,16 +191,14 @@ describe('deleteAccount job', () => {
     // Should fail with appropriate message
     expect(result).toEqual({
       success: false,
-      message: expect.stringContaining(
-        'User Doc with ID nonexistent not found'
-      ),
+      message: expect.stringContaining('User Doc with ID nonexistent not found'),
     });
   });
 
   it('should handle storage errors gracefully', async () => {
     // Force a storage error but let the rest proceed
     (admin.storage().bucket().deleteFiles as jest.Mock).mockRejectedValue(
-      new Error('Storage error')
+      new Error('Storage error'),
     );
 
     // Call the function

@@ -65,9 +65,7 @@ describe('Endpoint Function Tests', () => {
         };
 
         expect(validJobTypes).toContain(jobData.jobType);
-        expect(['pending', 'in-progress', 'completed', 'failed']).toContain(
-          jobData.status
-        );
+        expect(['pending', 'in-progress', 'completed', 'failed']).toContain(jobData.status);
       }
     });
   });
@@ -161,8 +159,10 @@ describe('Endpoint Function Tests', () => {
         priority?: number;
       }
 
-      const defaultPriority =
-        (requestWithoutPriority.data as RequestData).priority || 1;
+      const defaultPriority = (requestWithoutPriority.data as RequestData).priority || 1;
+      expect(defaultPriority).toBe(1);
+
+      (requestWithoutPriority.data as RequestData).priority || 1;
       expect(defaultPriority).toBe(1);
 
       const requestWithPriority = {

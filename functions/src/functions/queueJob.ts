@@ -5,30 +5,27 @@ import { db } from '../config/firebase';
 import type { Job } from '../types/jobTypes';
 
 export const queueJob = onCall(async (request) => {
-  // Check if user is authenticated
-  if (request?.auth === null) {
-    throw new HttpsError(
-      'unauthenticated',
-      'User must be authenticated to use this function.'
-    );
-  }
-
-  if (!request.data.jobType) {
-    throw new HttpsError('invalid-argument', 'Job type is required.');
-  }
-
-  const userId = request.auth?.uid;
-  const userEmail = request.auth?.token.email;
-
-  if (!userId) {
-    throw new HttpsError('invalid-argument', 'User ID is required.');
-  }
-
-  const { jobType, priority, ...data } = request.data;
-
   return Sentry.startSpan(
     { name: 'queueJob', op: 'function.https.onCall', attributes: request.data },
     async () => {
+      // Check if user is authenticated
+      if (request?.auth === null) {
+        throw new HttpsError('unauthenticated', 'User must be authenticated to use this function.');
+      }
+
+      if (!request.data.jobType) {
+        throw new HttpsError('invalid-argument', 'Job type is required.');
+      }
+
+      const userId = request.auth?.uid;
+      const userEmail = request.auth?.token.email;
+
+      if (!userId) {
+        throw new HttpsError('invalid-argument', 'User ID is required.');
+      }
+
+      const { jobType, priority, ...data } = request.data;
+
       try {
         // Create a task with standard fields plus any custom data
         const job: Job = {
@@ -64,11 +61,8 @@ export const queueJob = onCall(async (request) => {
       } catch (error) {
         Sentry.captureException(error);
 
-        throw new HttpsError(
-          'internal',
-          `Error adding task to queue: ${error}`
-        );
+        throw new HttpsError('internal', `Error adding task to queue: ${error}`);
       }
-    }
+    },
   );
 });

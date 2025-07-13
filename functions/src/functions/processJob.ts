@@ -2,13 +2,16 @@ import * as Sentry from '@sentry/node';
 
 import { Timestamp } from 'firebase-admin/firestore';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { currentDatabaseId } from '../config/firebase';
 import { deleteAccount } from '../jobs/deleteAccount';
 import { exportData } from '../jobs/exportData';
 import type { Job } from '../types/jobTypes';
-import { currentDatabaseId } from '../config/firebase';
 
 // Create the trigger with environment-specific database
-const triggerOptions = { document: 'jobs/{jobId}', database: currentDatabaseId };
+const triggerOptions = {
+  document: 'jobs/{jobId}',
+  database: currentDatabaseId,
+};
 
 export const processJob = onDocumentCreated(triggerOptions, async (event) => {
   return Sentry.startSpan(
@@ -65,6 +68,6 @@ export const processJob = onDocumentCreated(triggerOptions, async (event) => {
       }
 
       return null;
-    }
+    },
   );
 });
