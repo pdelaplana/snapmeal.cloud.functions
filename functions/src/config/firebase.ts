@@ -21,7 +21,7 @@ try {
   if (fs.existsSync('./firebase-service-account.json')) {
     admin.initializeApp({
       credential: admin.credential.cert('./firebase-service-account.json'),
-      storageBucket: process.env.STORAGE_BUCKET || 'snapmeal-sa2e9.firebasestorage.app',
+      storageBucket: storageBucket.value() || 'snapmeal-sa2e9.firebasestorage.app',
     });
     console.log(`Using service account from file: firebase-service-account.json`);
   } else {
