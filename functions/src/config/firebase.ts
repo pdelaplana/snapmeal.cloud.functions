@@ -1,17 +1,19 @@
 import * as fs from 'node:fs';
 import * as admin from 'firebase-admin';
+import { defineString } from 'firebase-functions/params';
+
+export const databaseId = defineString('DATABASE_ID', {
+  default: '(default)',
+  description: 'The ID of the Firestore database to use',
+});
+export const storageBucket = defineString('STORAGE_BUCKET', {
+  default: 'snapmeal-sa2e9.firebasestorage.app',
+  description: 'The name of the Firebase Storage bucket',
+});
 
 console.log('Initializing Firebase Admin SDK...');
-console.log(`Using environment variable DATABASE_ID: ${process.env.DATABASE_ID}`);
-console.log(`Using environment variable STORAGE_BUCKET: ${process.env.STORAGE_BUCKET}`);
-
-// Get environment-specific database ID
-const getDatabaseId = (): string => {
-  return process.env.DATABASE_ID || '(default)';
-};
-
-// Get database ID before initialization
-const databaseId = getDatabaseId();
+console.log(`Using environment variable DATABASE_ID: ${databaseId.value()}`);
+console.log(`Using environment variable STORAGE_BUCKET: ${storageBucket.value()}`);
 
 // Initialize Firebase Admin SDK
 try {
@@ -36,9 +38,9 @@ try {
 // Export Firestore instance
 export const db = admin.firestore();
 db.settings({
-  databaseId: databaseId,
+  databaseId: databaseId.value(),
   timestampsInSnapshots: true, // Enable timestamps in snapshots
 });
 
 // Export database ID for reference
-export const currentDatabaseId = databaseId;
+export const currentDatabaseId = databaseId.value();
