@@ -9,8 +9,8 @@ export { test };
 // Mock firebase-functions/params to avoid runtime parameter issues in tests
 jest.mock('firebase-functions/params', () => ({
   defineString: jest.fn((name: string, config: any) => ({
-    value: () => config.default || 'mock-value'
-  }))
+    value: () => config.default || 'mock-value',
+  })),
 }));
 
 // Mock Admin SDK initialization to avoid credential errors
