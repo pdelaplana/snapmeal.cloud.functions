@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as admin from 'firebase-admin';
 import { defineString } from 'firebase-functions/params';
+import { onInit } from 'firebase-functions/core';
 
 export const databaseId = defineString('DATABASE_ID', {
   default: '(default)',
@@ -11,9 +12,11 @@ export const storageBucket = defineString('STORAGE_BUCKET', {
   description: 'The name of the Firebase Storage bucket',
 });
 
-console.log('Initializing Firebase Admin SDK...');
-console.log(`Using environment variable DATABASE_ID: ${databaseId.value()}`);
-console.log(`Using environment variable STORAGE_BUCKET: ${storageBucket.value()}`);
+onInit(() => {
+  console.log('Firebase Functions initialized with the following parameters:');
+  console.log(`DATABASE_ID: ${databaseId.value()}`);
+  console.log(`STORAGE_BUCKET: ${storageBucket.value()}`);
+});
 
 // Initialize Firebase Admin SDK
 try {
