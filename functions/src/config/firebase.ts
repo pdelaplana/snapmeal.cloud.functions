@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as admin from 'firebase-admin';
-import { defineString } from 'firebase-functions/params';
 import { onInit } from 'firebase-functions/core';
+import { defineString } from 'firebase-functions/params';
 
 export const databaseId = defineString('DATABASE_ID', {
   default: '(default)',
