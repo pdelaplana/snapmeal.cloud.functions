@@ -121,6 +121,9 @@ jobs:
           npm run build
       
       - name: Deploy to Firebase
+        env: 
+          DATABASE_ID: ${{ env.DATABASE_ID }}
+          STORAGE_BUCKET: ${{ env.STOREAGE_BUCKET }}
         run: |
           cd functions
           npx firebase deploy --only functions --force
