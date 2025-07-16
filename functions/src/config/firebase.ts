@@ -41,3 +41,7 @@ export const initializeFirebase = () => {
     throw error;
   }
 };
+
+export const getCurrentDatabaseId = () => {
+  return databaseId.value();
+};
