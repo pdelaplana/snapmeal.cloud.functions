@@ -7,7 +7,7 @@ import params from 'firebase-functions/params';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import { parse } from 'json2csv';
-import { db } from '../config/firebase';
+import { initializeFirebase } from '../config/firebase';
 import { sendEmailNotification } from '../helpers/sendEmail';
 
 export const exportData = async ({ userId, userEmail }: { userId: string; userEmail: string }) => {
@@ -17,6 +17,8 @@ export const exportData = async ({ userId, userEmail }: { userId: string; userEm
     }
 
     try {
+      const { db } = initializeFirebase();
+
       // Validate collection name (you can add more validation as needed)
       const userRef = db.collection('users').doc(userId ?? '');
 

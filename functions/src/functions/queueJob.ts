@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node';
 import { Timestamp } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { db } from '../config/firebase';
+import { initializeFirebase } from '../config/firebase';
 import type { Job } from '../types/jobTypes';
 
 export const queueJob = onCall(async (request) => {
@@ -27,6 +27,7 @@ export const queueJob = onCall(async (request) => {
       const { jobType, priority, ...data } = request.data;
 
       try {
+        const { db } = initializeFirebase();
         // Create a task with standard fields plus any custom data
         const job: Job = {
           // Standard task fields

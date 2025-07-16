@@ -1,7 +1,6 @@
 import Sentry from '@sentry/node';
-import admin from 'firebase-admin';
 import { params } from 'firebase-functions';
-import { db } from '../config/firebase';
+import { initializeFirebase } from '../config/firebase';
 import { sendEmailNotification } from '../helpers/sendEmail';
 
 export const deleteAccount = async ({
@@ -17,6 +16,8 @@ export const deleteAccount = async ({
     }
 
     try {
+      const { admin, db } = initializeFirebase();
+
       // Get a reference to the account document
       const userRef = db.collection('users').doc(userId);
 
