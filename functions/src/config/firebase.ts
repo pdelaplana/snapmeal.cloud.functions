@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin';
 import { defineString } from 'firebase-functions/params';
 
 export const databaseId = defineString('DATABASE_ID', {
-  default: '(default)',
+  default: 'development',
   description: 'The ID of the Firestore database to use',
 });
 export const storageBucket = defineString('STORAGE_BUCKET', {

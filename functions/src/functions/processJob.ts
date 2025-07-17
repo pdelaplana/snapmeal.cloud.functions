@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node';
 
 import { Timestamp } from 'firebase-admin/firestore';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-//import { getCurrentDatabaseId } from '../config/firebase';
+import { getCurrentDatabaseId } from '../config/firebase';
 import { deleteAccount } from '../jobs/deleteAccount';
 import { exportData } from '../jobs/exportData';
 import type { Job } from '../types/jobTypes';
@@ -10,8 +10,7 @@ import type { Job } from '../types/jobTypes';
 // Create the trigger with environment-specific database
 const triggerOptions = {
   document: 'jobs/{jobId}',
-  //database: getCurrentDatabaseId(),
-  database: process.env.DATABASE_ID || '(default)',
+  database: getCurrentDatabaseId(),
 };
 
 export const processJob = onDocumentCreated(triggerOptions, async (event) => {
