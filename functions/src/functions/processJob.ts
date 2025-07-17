@@ -11,7 +11,7 @@ import type { Job } from '../types/jobTypes';
 const triggerOptions = {
   document: 'jobs/{jobId}',
   //database: getCurrentDatabaseId(),
-  database: 'development',
+  database: process.env.DATABASE_ID || '(default)',
 };
 
 export const processJob = onDocumentCreated(triggerOptions, async (event) => {
