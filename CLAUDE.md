@@ -67,9 +67,11 @@ functions/
 - Clean, minimal entry point with proper initialization order
 
 **Firebase Configuration (`src/config/firebase.ts`)**
+- Function-based initialization with `initializeFirebase()` returning `{ admin, db }`
 - Configurable database ID and storage bucket via environment parameters
 - Conditional initialization: service account file for local dev, default credentials for production
-- Exports configured Firestore instance (`db`) and current database ID
+- Lazy initialization pattern for better testability and resource management
+- Helper function `getCurrentDatabaseId()` for accessing current database configuration
 - Proper error handling and logging for initialization
 
 **Sentry Configuration (`src/config/sentry.ts`)**
@@ -152,6 +154,24 @@ functions/
 
 ## Development Guidelines
 
+### Firebase Initialization Pattern
+The project uses a functional initialization approach:
+```typescript
+// In job functions and other modules
+const { admin, db } = initializeFirebase();
+```
+
+**Key Benefits:**
+- Lazy initialization - Firebase is only initialized when needed
+- Better testability - easier to mock in unit tests
+- Cleaner dependency management
+- Consistent error handling across all functions
+
+**Important Notes:**
+- The `processJob` function currently uses a hard-coded database reference (`'development'`)
+- This requires deployment-time configuration for different environments
+- Firebase Admin SDK handles multiple initialization calls gracefully
+
 ### TypeScript Configuration
 - Target: ES2017 with CommonJS modules for Node.js compatibility
 - Strict mode enabled with comprehensive type checking
@@ -168,7 +188,7 @@ functions/
 
 ### Environment Configuration
 **Required Environment Variables:**
-- `DATABASE_ID` - Firestore database ID (default: "(default)")
+- `DATABASE_ID` - Firestore database ID (default: "development")
 - `STORAGE_BUCKET` - Firebase Storage bucket name
 - `SENTRY_DSN` - Sentry project DSN for error tracking
 - `ENVIRONMENT` - Environment name for monitoring
@@ -191,6 +211,8 @@ functions/
 - Test coverage reporting enabled
 - Separate test configurations for unit and integration tests
 - Firebase Functions test utilities for Cloud Functions testing
+- Comprehensive mocking strategy for Firebase services and parameters
+- Mock for `firebase-functions/params` to handle runtime parameters in tests
 
 ## Firebase Configuration
 
