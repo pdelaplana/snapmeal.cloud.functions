@@ -11,6 +11,8 @@ export const storageBucket = defineString('STORAGE_BUCKET', {
   description: 'The name of the Firebase Storage bucket',
 });
 
+let dbInstance: admin.firestore.Firestore | null = null;
+
 export const initializeFirebase = () => {
   // Initialize Firebase Admin SDK
   try {
@@ -31,15 +33,17 @@ export const initializeFirebase = () => {
         `Firebase Admin SDK initialized successfully with database: ${databaseId.value()}`,
       );
 
-      // Export Firestore instance
-      const db = admin.firestore();
-      db.settings({
+      // Create and configure Firestore instance
+      dbInstance = admin.firestore();
+      dbInstance.settings({
         databaseId: databaseId.value(),
         timestampsInSnapshots: true, // Enable timestamps in snapshots
       });
     }
 
-    return { admin, db: admin.firestore() };
+    // Return the cached db instance or create a new one if not cached
+    const db = dbInstance || admin.firestore();
+    return { admin, db };
   } catch (error) {
     console.error('Error initializing Firebase Admin SDK:', error);
     throw error;
