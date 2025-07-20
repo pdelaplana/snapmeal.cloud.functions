@@ -11,31 +11,37 @@ export const storageBucket = defineString('STORAGE_BUCKET', {
   description: 'The name of the Firebase Storage bucket',
 });
 
+let isInit = admin.apps.length === 0;
 export const initializeFirebase = () => {
   // Initialize Firebase Admin SDK
   try {
-    // In production/CI environment, use service account from env or file
-    if (fs.existsSync('./firebase-service-account.json')) {
-      admin.initializeApp({
-        credential: admin.credential.cert('./firebase-service-account.json'),
-        storageBucket: storageBucket.value() || 'snapmeal-sa2e9.firebasestorage.app',
+    if (!isInit) {
+      // In production/CI environment, use service account from env or file
+      if (fs.existsSync('./firebase-service-account.json')) {
+        admin.initializeApp({
+          credential: admin.credential.cert('./firebase-service-account.json'),
+          storageBucket: storageBucket.value() || 'snapmeal-sa2e9.firebasestorage.app',
+        });
+        console.log(`Using service account from file: firebase-service-account.json`);
+      } else {
+        // Default initialization for production environment
+        admin.initializeApp();
+      }
+
+      console.log(
+        `Firebase Admin SDK initialized successfully with database: ${databaseId.value()}`,
+      );
+
+      // Export Firestore instance
+      const db = admin.firestore();
+      db.settings({
+        databaseId: databaseId.value(),
+        timestampsInSnapshots: true, // Enable timestamps in snapshots
       });
-      console.log(`Using service account from file: firebase-service-account.json`);
-    } else {
-      // Default initialization for production environment
-      admin.initializeApp();
+      isInit = true;
     }
 
-    console.log(`Firebase Admin SDK initialized successfully with database: ${databaseId.value()}`);
-
-    // Export Firestore instance
-    const db = admin.firestore();
-    db.settings({
-      databaseId: databaseId.value(),
-      timestampsInSnapshots: true, // Enable timestamps in snapshots
-    });
-
-    return { admin, db };
+    return { admin, db: admin.firestore() };
   } catch (error) {
     console.error('Error initializing Firebase Admin SDK:', error);
     throw error;
