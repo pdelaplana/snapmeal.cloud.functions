@@ -29,16 +29,20 @@ jest.mock('firebase-admin', () => {
     deleteFiles: jest.fn(),
   };
 
+  // Create a consistent firestore mock instance
+  const mockFirestore = {
+    collection: jest.fn().mockReturnValue(mockCollection),
+    settings: jest.fn(),
+  };
+
   return {
+    apps: [], // Mock the apps array for admin.apps.length check
     initializeApp: jest.fn(),
     credential: {
       applicationDefault: jest.fn(),
       cert: jest.fn(),
     },
-    firestore: jest.fn().mockReturnValue({
-      collection: jest.fn().mockReturnValue(mockCollection),
-      settings: jest.fn(),
-    }),
+    firestore: jest.fn().mockReturnValue(mockFirestore),
     storage: jest.fn().mockReturnValue({
       bucket: jest.fn().mockReturnValue(mockBucket),
     }),

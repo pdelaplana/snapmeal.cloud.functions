@@ -11,11 +11,10 @@ export const storageBucket = defineString('STORAGE_BUCKET', {
   description: 'The name of the Firebase Storage bucket',
 });
 
-let isInit = admin.apps.length === 0;
 export const initializeFirebase = () => {
   // Initialize Firebase Admin SDK
   try {
-    if (!isInit) {
+    if (admin.apps.length === 0) {
       // In production/CI environment, use service account from env or file
       if (fs.existsSync('./firebase-service-account.json')) {
         admin.initializeApp({
@@ -38,7 +37,6 @@ export const initializeFirebase = () => {
         databaseId: databaseId.value(),
         timestampsInSnapshots: true, // Enable timestamps in snapshots
       });
-      isInit = true;
     }
 
     return { admin, db: admin.firestore() };
