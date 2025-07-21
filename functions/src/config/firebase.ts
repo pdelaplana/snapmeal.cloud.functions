@@ -41,9 +41,21 @@ export const initializeFirebase = () => {
       });
     }
 
-    // Return the cached db instance or create a new one if not cached
-    const db = dbInstance || admin.firestore();
-    return { admin, db };
+    // Ensure we have a valid database instance
+    if (!dbInstance) {
+      // If no cached instance but app exists, create new instance
+      if (admin.apps.length > 0) {
+        dbInstance = admin.firestore();
+        dbInstance.settings({
+          databaseId: databaseId.value(),
+          timestampsInSnapshots: true,
+        });
+      } else {
+        throw new Error('Firebase app not initialized and no cached database instance available');
+      }
+    }
+
+    return { admin, db: dbInstance };
   } catch (error) {
     console.error('Error initializing Firebase Admin SDK:', error);
     throw error;
