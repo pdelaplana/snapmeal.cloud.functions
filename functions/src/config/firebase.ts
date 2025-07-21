@@ -11,51 +11,42 @@ export const storageBucket = defineString('STORAGE_BUCKET', {
   description: 'The name of the Firebase Storage bucket',
 });
 
-let dbInstance: admin.firestore.Firestore | null = null;
-
 export const initializeFirebase = () => {
-  // Initialize Firebase Admin SDK
   try {
-    if (admin.apps.length === 0) {
-      // In production/CI environment, use service account from env or file
+    // Always check if we can access the default app
+    let app: admin.app.App | null;
+    try {
+      app = admin.app(); // Try to get default app
+    } catch (_error) {
+      // No accessible app, need to initialize
+      app = null;
+    }
+
+    if (!app) {
+      // Initialize new app
       if (fs.existsSync('./firebase-service-account.json')) {
-        admin.initializeApp({
+        app = admin.initializeApp({
           credential: admin.credential.cert('./firebase-service-account.json'),
           storageBucket: storageBucket.value() || 'snapmeal-sa2e9.firebasestorage.app',
         });
         console.log(`Using service account from file: firebase-service-account.json`);
       } else {
-        // Default initialization for production environment
-        admin.initializeApp();
+        app = admin.initializeApp();
       }
 
       console.log(
         `Firebase Admin SDK initialized successfully with database: ${databaseId.value()}`,
       );
-
-      // Create and configure Firestore instance
-      dbInstance = admin.firestore();
-      dbInstance.settings({
-        databaseId: databaseId.value(),
-        timestampsInSnapshots: true, // Enable timestamps in snapshots
-      });
     }
 
-    // Ensure we have a valid database instance
-    if (!dbInstance) {
-      // If no cached instance but app exists, create new instance
-      if (admin.apps.length > 0) {
-        dbInstance = admin.firestore();
-        dbInstance.settings({
-          databaseId: databaseId.value(),
-          timestampsInSnapshots: true,
-        });
-      } else {
-        throw new Error('Firebase app not initialized and no cached database instance available');
-      }
-    }
+    // Always create fresh firestore instance
+    const db = admin.firestore();
+    db.settings({
+      databaseId: databaseId.value(),
+      timestampsInSnapshots: true,
+    });
 
-    return { admin, db: dbInstance };
+    return { admin, db };
   } catch (error) {
     console.error('Error initializing Firebase Admin SDK:', error);
     throw error;

@@ -8,7 +8,7 @@ export { test };
 
 // Mock firebase-functions/params to avoid runtime parameter issues in tests
 jest.mock('firebase-functions/params', () => ({
-  defineString: jest.fn((name: string, config: any) => ({
+  defineString: jest.fn((_name: string, config: { default?: string }) => ({
     value: () => config.default || 'mock-value',
   })),
 }));
