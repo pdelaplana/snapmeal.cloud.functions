@@ -15,7 +15,7 @@ export const initializeFirebase = () => {
   try {
     // Check if Firebase app is already initialized and accessible
     let app: admin.app.App | null = null;
-    
+
     // Try to get the default app
     if (admin.apps.length > 0) {
       try {
