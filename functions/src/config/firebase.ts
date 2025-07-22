@@ -13,34 +13,50 @@ export const storageBucket = defineString('STORAGE_BUCKET', {
 
 export const initializeFirebase = () => {
   try {
-    // Always check if we can access the default app
-    let app: admin.app.App | null;
-    try {
-      app = admin.app(); // Try to get default app
-    } catch (_error) {
-      // No accessible app, need to initialize
-      app = null;
+    // Check if Firebase app is already initialized and accessible
+    let app: admin.app.App | null = null;
+    
+    // Try to get the default app
+    if (admin.apps.length > 0) {
+      try {
+        app = admin.app();
+        // Test if the app is actually functional by accessing a service
+        app.options; // This will throw if app is not properly initialized
+      } catch (_error) {
+        console.log('Existing app found but not functional, reinitializing...');
+        app = null;
+      }
     }
 
     if (!app) {
       // Initialize new app
-      if (fs.existsSync('./firebase-service-account.json')) {
-        app = admin.initializeApp({
-          credential: admin.credential.cert('./firebase-service-account.json'),
-          storageBucket: storageBucket.value() || 'snapmeal-sa2e9.firebasestorage.app',
-        });
-        console.log(`Using service account from file: firebase-service-account.json`);
-      } else {
-        app = admin.initializeApp();
-      }
+      try {
+        if (fs.existsSync('./firebase-service-account.json')) {
+          app = admin.initializeApp({
+            credential: admin.credential.cert('./firebase-service-account.json'),
+            storageBucket: storageBucket.value() || 'snapmeal-sa2e9.firebasestorage.app',
+          });
+          console.log(`Using service account from file: firebase-service-account.json`);
+        } else {
+          app = admin.initializeApp();
+        }
 
-      console.log(
-        `Firebase Admin SDK initialized successfully with database: ${databaseId.value()}`,
-      );
+        console.log(
+          `Firebase Admin SDK initialized successfully with database: ${databaseId.value()}`,
+        );
+      } catch (initError: any) {
+        if (initError.code === 'app/duplicate-app') {
+          // App already exists, try to get it
+          app = admin.app();
+          console.log('Using existing Firebase app');
+        } else {
+          throw initError;
+        }
+      }
     }
 
-    // Always create fresh firestore instance
-    const db = admin.firestore();
+    // Create firestore instance with explicit app reference
+    const db = admin.firestore(app);
     db.settings({
       databaseId: databaseId.value(),
       timestampsInSnapshots: true,
