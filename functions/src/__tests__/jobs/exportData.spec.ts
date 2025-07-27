@@ -11,14 +11,29 @@ jest.mock('../../config/firebase', () => {
   };
 
   const mockAdmin = {
+    auth: jest.fn(),
     storage: jest.fn(),
+    apps: { length: 0 },
+    initializeApp: jest.fn(),
+    credential: {
+      cert: jest.fn(),
+    },
   };
 
   return {
     initializeFirebase: jest.fn(() => ({
       admin: mockAdmin,
       db: mockDb,
+      auth: mockAdmin.auth(),
+      storage: mockAdmin.storage(),
+      currentDatabaseId: 'development',
     })),
+    databaseId: {
+      value: jest.fn().mockReturnValue('development'),
+    },
+    storageBucket: {
+      value: jest.fn().mockReturnValue('test-bucket'),
+    },
   };
 });
 
@@ -33,6 +48,15 @@ jest.mock('firebase-functions', () => ({
   params: {
     storageBucket: {
       value: jest.fn().mockReturnValue('test-bucket'),
+    },
+  },
+}));
+
+// Mock firebase-functions/v2
+jest.mock('firebase-functions/v2', () => ({
+  params: {
+    projectID: {
+      value: jest.fn().mockReturnValue('test-project-id'),
     },
   },
 }));
@@ -96,6 +120,10 @@ describe('exportData job', () => {
     jest.clearAllMocks();
 
     // Setup the initializeFirebase mock to return our test objects
+    const mockStorage = {
+      bucket: jest.fn(() => bucket),
+    };
+
     const mockDb = {
       collection: jest.fn().mockReturnValue({
         doc: jest.fn().mockReturnValue(mockAccountRef),
@@ -103,14 +131,14 @@ describe('exportData job', () => {
     };
 
     const mockAdmin = {
-      storage: jest.fn().mockReturnValue({
-        bucket: jest.fn(() => bucket),
-      }),
+      storage: jest.fn().mockReturnValue(mockStorage),
     };
 
     (initializeFirebase as jest.Mock).mockReturnValue({
       admin: mockAdmin,
       db: mockDb,
+      storage: mockStorage,
+      currentDatabaseId: 'development',
     });
 
     mockAccountRef.get.mockResolvedValue(mockAccountSnapshot);
@@ -145,9 +173,9 @@ describe('exportData job', () => {
     expect(fs.unlinkSync).toHaveBeenCalled();
 
     // Verify storage operations
-    expect(mockInitResult.admin.storage().bucket).toHaveBeenCalled();
-    expect(mockInitResult.admin.storage().bucket().upload).toHaveBeenCalled();
-    expect(mockInitResult.admin.storage().bucket().file).toHaveBeenCalledWith(
+    expect(mockInitResult.storage.bucket).toHaveBeenCalled();
+    expect(mockInitResult.storage.bucket().upload).toHaveBeenCalled();
+    expect(mockInitResult.storage.bucket().file).toHaveBeenCalledWith(
       expect.stringMatching(/users\/user1\/exports\/meals-.*\.csv/),
     );
 

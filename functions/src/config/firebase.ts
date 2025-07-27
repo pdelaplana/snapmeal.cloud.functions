@@ -1,6 +1,8 @@
 import * as fs from 'node:fs';
 import * as admin from 'firebase-admin';
+import type { Auth } from 'firebase-admin/auth';
 import { Firestore } from 'firebase-admin/firestore';
+import type { Storage } from 'firebase-admin/storage';
 import { defineString } from 'firebase-functions/params';
 import { params } from 'firebase-functions/v2';
 
@@ -14,13 +16,20 @@ export const storageBucket = defineString('STORAGE_BUCKET', {
 });
 
 let dbInstance: FirebaseFirestore.Firestore | undefined;
+let authInstance: Auth | undefined;
+let storageInstance: Storage | undefined;
 let adminInstance: typeof admin | undefined;
 let currentDatabaseId: string;
 
 export const initializeFirebase = () => {
-  // ✅ Prevent multiple initializations
-  if (adminInstance && dbInstance) {
-    return { admin: adminInstance, db: dbInstance, currentDatabaseId };
+  if (adminInstance && dbInstance && authInstance && storageInstance) {
+    return {
+      admin: adminInstance,
+      db: dbInstance,
+      auth: authInstance,
+      storage: storageInstance,
+      currentDatabaseId,
+    };
   }
 
   try {
@@ -56,10 +65,19 @@ export const initializeFirebase = () => {
       keyFilename: './firebase-service-account.json', // Use the service account file if it exists
     });
 
+    authInstance = admin.auth();
+    storageInstance = admin.storage();
+
     console.log(`Firestore initialized successfully with database: ${currentDatabaseId}`);
 
     adminInstance = admin;
-    return { admin: adminInstance, db: dbInstance, currentDatabaseId };
+    return {
+      admin: adminInstance,
+      db: dbInstance,
+      auth: authInstance,
+      storage: storageInstance,
+      currentDatabaseId,
+    };
   } catch (error) {
     console.error('Error initializing Firebase Admin SDK:', error);
     throw error;

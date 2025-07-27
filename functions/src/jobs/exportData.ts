@@ -16,7 +16,7 @@ export const exportData = async ({ userId, userEmail }: { userId: string; userEm
     }
 
     try {
-      const { admin, db } = initializeFirebase();
+      const { db, storage } = initializeFirebase();
 
       // Validate collection name (you can add more validation as needed)
       const userRef = db.collection('users').doc(userId ?? '');
@@ -57,9 +57,9 @@ export const exportData = async ({ userId, userEmail }: { userId: string; userEm
       fs.writeFileSync(tempFilePath, csv);
 
       // Upload to Firebase Storage
-      const defaultBucket = params?.storageBucket?.value() || admin.storage().bucket().name;
+      const defaultBucket = params?.storageBucket?.value() || storage.bucket().name;
       console.log('Default bucket:', defaultBucket);
-      const bucket = admin.storage().bucket(defaultBucket);
+      const bucket = storage.bucket(defaultBucket);
       const storageFilePath = `users/${userId}/exports/meals-${timestamp}.csv`;
 
       await bucket.upload(tempFilePath, {

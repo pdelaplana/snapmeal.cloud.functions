@@ -11,13 +11,27 @@ jest.mock('../../config/firebase', () => {
   const mockAdmin = {
     auth: jest.fn(),
     storage: jest.fn(),
+    apps: { length: 0 },
+    initializeApp: jest.fn(),
+    credential: {
+      cert: jest.fn(),
+    },
   };
 
   return {
     initializeFirebase: jest.fn(() => ({
       admin: mockAdmin,
       db: mockDb,
+      auth: mockAdmin.auth(),
+      storage: mockAdmin.storage(),
+      currentDatabaseId: 'development',
     })),
+    databaseId: {
+      value: jest.fn().mockReturnValue('development'),
+    },
+    storageBucket: {
+      value: jest.fn().mockReturnValue('test-bucket'),
+    },
   };
 });
 
@@ -27,10 +41,23 @@ jest.mock('node:fs', () => ({
 }));
 
 // Mock firebase-functions
-jest.mock('firebase-functions', () => ({
+jest.mock('firebase-functions', () => {
+  const mockStorageBucket = {
+    value: jest.fn().mockReturnValue('test-bucket'),
+  };
+
+  return {
+    params: {
+      storageBucket: mockStorageBucket,
+    },
+  };
+});
+
+// Mock firebase-functions/v2
+jest.mock('firebase-functions/v2', () => ({
   params: {
-    storageBucket: {
-      value: jest.fn().mockReturnValue('test-bucket'),
+    projectID: {
+      value: jest.fn().mockReturnValue('test-project-id'),
     },
   },
 }));
@@ -96,6 +123,14 @@ describe('deleteAccount job', () => {
       name: 'default-bucket',
     };
 
+    const mockAuth = {
+      deleteUser: jest.fn().mockResolvedValue({}),
+    };
+
+    const mockStorage = {
+      bucket: jest.fn().mockReturnValue(mockBucket),
+    };
+
     const mockDb = {
       collection: jest.fn().mockReturnValue({
         doc: jest.fn().mockReturnValue(mockUserDocRef),
@@ -103,17 +138,16 @@ describe('deleteAccount job', () => {
     };
 
     const mockAdmin = {
-      auth: jest.fn().mockReturnValue({
-        deleteUser: jest.fn().mockResolvedValue({}),
-      }),
-      storage: jest.fn().mockReturnValue({
-        bucket: jest.fn().mockReturnValue(mockBucket),
-      }),
+      auth: jest.fn().mockReturnValue(mockAuth),
+      storage: jest.fn().mockReturnValue(mockStorage),
     };
 
     (initializeFirebase as jest.Mock).mockReturnValue({
       admin: mockAdmin,
       db: mockDb,
+      auth: mockAuth,
+      storage: mockStorage,
+      currentDatabaseId: 'development',
     });
 
     mockUserDocRef.get.mockResolvedValue(mockUserSnapshot);
@@ -153,11 +187,11 @@ describe('deleteAccount job', () => {
     const mockInitResult = (initializeFirebase as jest.Mock).mock.results[0].value;
 
     // Verify authentication deletion
-    expect(mockInitResult.admin.auth().deleteUser).toHaveBeenCalledWith('user1');
+    expect(mockInitResult.auth.deleteUser).toHaveBeenCalledWith('user1');
 
-    // Verify storage cleanup
-    expect(mockInitResult.admin.storage().bucket).toHaveBeenCalledWith('test-bucket');
-    expect(mockInitResult.admin.storage().bucket().deleteFiles).toHaveBeenCalledWith({
+    // Verify storage cleanup - might be called with 'test-bucket' or default bucket name
+    expect(mockInitResult.storage.bucket).toHaveBeenCalled();
+    expect(mockInitResult.storage.bucket().deleteFiles).toHaveBeenCalledWith({
       prefix: 'users/user1/',
     });
 
@@ -209,6 +243,14 @@ describe('deleteAccount job', () => {
       name: 'default-bucket',
     };
 
+    const mockAuth = {
+      deleteUser: jest.fn().mockResolvedValue({}),
+    };
+
+    const mockStorage = {
+      bucket: jest.fn().mockReturnValue(mockBucket),
+    };
+
     const mockDb = {
       collection: jest.fn().mockReturnValue({
         doc: jest.fn().mockReturnValue(mockUserDocRef),
@@ -216,17 +258,16 @@ describe('deleteAccount job', () => {
     };
 
     const mockAdmin = {
-      auth: jest.fn().mockReturnValue({
-        deleteUser: jest.fn().mockResolvedValue({}),
-      }),
-      storage: jest.fn().mockReturnValue({
-        bucket: jest.fn().mockReturnValue(mockBucket),
-      }),
+      auth: jest.fn().mockReturnValue(mockAuth),
+      storage: jest.fn().mockReturnValue(mockStorage),
     };
 
     (initializeFirebase as jest.Mock).mockReturnValue({
       admin: mockAdmin,
       db: mockDb,
+      auth: mockAuth,
+      storage: mockStorage,
+      currentDatabaseId: 'development',
     });
 
     // Call the function

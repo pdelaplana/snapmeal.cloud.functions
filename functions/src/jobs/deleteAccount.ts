@@ -1,5 +1,4 @@
 import Sentry from '@sentry/node';
-import { params } from 'firebase-functions';
 import { initializeFirebase } from '../config/firebase';
 import { sendEmailNotification } from '../helpers/sendEmail';
 
@@ -16,7 +15,7 @@ export const deleteAccount = async ({
     }
 
     try {
-      const { admin, db } = initializeFirebase();
+      const { auth, db, storage } = initializeFirebase();
 
       // Get a reference to the account document
       const userRef = db.collection('users').doc(userId);
@@ -42,14 +41,14 @@ export const deleteAccount = async ({
       await userRef.delete();
 
       // 3. Delete user from Firebase Authentication
-      await admin.auth().deleteUser(userId);
+      await auth.deleteUser(userId);
 
       // 5. Delete user's storage files
       try {
         // Get storage bucket name from parameters or use default
-        const defaultBucket = params.storageBucket.value() || admin.storage().bucket().name;
+        const defaultBucket = storage.bucket().name;
         console.log('Default bucket:', defaultBucket);
-        const bucket = admin.storage().bucket(defaultBucket);
+        const bucket = storage.bucket(defaultBucket);
 
         await bucket.deleteFiles({
           prefix: `users/${userId}/`,
