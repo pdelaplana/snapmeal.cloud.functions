@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as admin from 'firebase-admin';
 import { defineString } from 'firebase-functions/params';
+import { Firestore } from 'firebase-admin/firestore';
 
 export const databaseId = defineString('DATABASE_ID', {
   default: 'development',
@@ -11,63 +12,54 @@ export const storageBucket = defineString('STORAGE_BUCKET', {
   description: 'The name of the Firebase Storage bucket',
 });
 
+
+let dbInstance: FirebaseFirestore.Firestore | undefined;
+let adminInstance: typeof admin | undefined;
+let currentDatabaseId: string;
+
 export const initializeFirebase = () => {
+  // ✅ Prevent multiple initializations
+  if (adminInstance && dbInstance) {
+    return { admin: adminInstance, db: dbInstance, currentDatabaseId };
+  }
+
   try {
-    // Check if Firebase app is already initialized and accessible
-    let app: admin.app.App | null = null;
+    currentDatabaseId = databaseId.value();
 
-    // Try to get the default app
-    if (admin.apps.length > 0) {
-      try {
-        app = admin.app();
-        // Test if the app is actually functional by accessing a service
-        app.options; // This will throw if app is not properly initialized
-      } catch (_error) {
-        console.log('Existing app found but not functional, reinitializing...');
-        app = null;
+    // Initialize Firebase Admin SDK only once
+    if (admin.apps.length === 0) {
+      const serviceAccountPath = './firebase-service-account.json';
+
+      if (fs.existsSync(serviceAccountPath)) {
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccountPath),
+          storageBucket: storageBucket.value(),
+        });
+        console.log(`Using service account from file: ${serviceAccountPath}`);
+      } else {
+        admin.initializeApp();
       }
     }
 
-    if (!app) {
-      // Initialize new app
-      try {
-        if (fs.existsSync('./firebase-service-account.json')) {
-          app = admin.initializeApp({
-            credential: admin.credential.cert('./firebase-service-account.json'),
-            storageBucket: storageBucket.value() || 'snapmeal-sa2e9.firebasestorage.app',
-          });
-          console.log(`Using service account from file: firebase-service-account.json`);
-        } else {
-          app = admin.initializeApp();
-        }
+    console.log(`Firebase Admin SDK initialized successfully with database: ${currentDatabaseId}`);
 
-        console.log(
-          `Firebase Admin SDK initialized successfully with database: ${databaseId.value()}`,
-        );
-      } catch (initError: any) {
-        if (initError.code === 'app/duplicate-app') {
-          // App already exists, try to get it
-          app = admin.app();
-          console.log('Using existing Firebase app');
-        } else {
-          throw initError;
-        }
-      }
-    }
-
-    // Create firestore instance with explicit app reference
-    const db = admin.firestore(app);
-    db.settings({
-      databaseId: databaseId.value(),
-      timestampsInSnapshots: true,
+    const dbInstance = new Firestore({
+      projectId: admin.app().options.projectId, // Get the project ID from your initialized Firebase app
+      databaseId: 'development', // **This is where you specify the named database!**
+      keyFilename: './firebase-service-account.json', // Use the service account file if it exists
     });
 
-    return { admin, db };
+    console.log(`Firestore initialized successfully with database: ${currentDatabaseId}`);
+
+    adminInstance = admin;
+    return { admin: adminInstance, db: dbInstance, currentDatabaseId };
+
   } catch (error) {
     console.error('Error initializing Firebase Admin SDK:', error);
     throw error;
   }
 };
+
 
 export const getCurrentDatabaseId = () => {
   return databaseId.value();
