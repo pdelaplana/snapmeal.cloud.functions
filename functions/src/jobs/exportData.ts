@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import Sentry from '@sentry/node';
-import admin from 'firebase-admin';
 import params from 'firebase-functions/params';
 import { HttpsError } from 'firebase-functions/v2/https';
 
@@ -17,7 +16,7 @@ export const exportData = async ({ userId, userEmail }: { userId: string; userEm
     }
 
     try {
-      const { db } = initializeFirebase();
+      const { admin, db } = initializeFirebase();
 
       // Validate collection name (you can add more validation as needed)
       const userRef = db.collection('users').doc(userId ?? '');

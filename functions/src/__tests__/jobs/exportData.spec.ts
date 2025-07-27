@@ -1,21 +1,23 @@
 import * as fs from 'node:fs';
 
-import * as admin from 'firebase-admin';
+import { initializeFirebase } from '../../config/firebase';
 import { sendEmailNotification } from '../../helpers/sendEmail';
 import { exportData } from '../../jobs/exportData';
 
-// Mock firebase-admin and other dependencies
-jest.mock('firebase-admin', () => {
-  const firestore = {
-    collection: jest.fn().mockReturnThis(),
-    doc: jest.fn().mockReturnThis(),
-    get: jest.fn(),
+// Mock the firebase config module
+jest.mock('../../config/firebase', () => {
+  const mockDb = {
+    collection: jest.fn(),
+  };
+
+  const mockAdmin = {
+    storage: jest.fn(),
   };
 
   return {
-    firestore: jest.fn(() => firestore),
-    storage: jest.fn(() => ({
-      bucket: jest.fn(),
+    initializeFirebase: jest.fn(() => ({
+      admin: mockAdmin,
+      db: mockDb,
     })),
   };
 });
@@ -26,6 +28,21 @@ jest.mock('node:fs', () => ({
   existsSync: jest.fn().mockReturnValue(false), // Mock existsSync to return false (no service account file)
 }));
 
+// Mock firebase-functions
+jest.mock('firebase-functions', () => ({
+  params: {
+    storageBucket: {
+      value: jest.fn().mockReturnValue('test-bucket'),
+    },
+  },
+}));
+
+// Mock firebase-functions params
+jest.mock('firebase-functions/params', () => ({
+  defineString: jest.fn((_name, config) => ({
+    value: jest.fn().mockReturnValue(config.default),
+  })),
+}));
 jest.mock('../../helpers/sendEmail', () => ({
   sendEmailNotification: jest.fn().mockResolvedValue({}),
 }));
@@ -33,12 +50,6 @@ jest.mock('../../helpers/sendEmail', () => ({
 jest.mock('@sentry/node', () => ({
   startSpan: jest.fn().mockImplementation((_, fn) => fn()),
   captureException: jest.fn(),
-}));
-
-jest.mock('firebase-functions/params', () => ({
-  storageBucket: {
-    value: jest.fn().mockReturnValue('test-bucket'),
-  },
 }));
 
 describe('exportData job', () => {
@@ -84,9 +95,22 @@ describe('exportData job', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Setup mock firestore responses
-    (admin.firestore().collection as jest.Mock).mockReturnValue({
-      doc: jest.fn().mockReturnValue(mockAccountRef),
+    // Setup the initializeFirebase mock to return our test objects
+    const mockDb = {
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockReturnValue(mockAccountRef),
+      }),
+    };
+
+    const mockAdmin = {
+      storage: jest.fn().mockReturnValue({
+        bucket: jest.fn(() => bucket),
+      }),
+    };
+
+    (initializeFirebase as jest.Mock).mockReturnValue({
+      admin: mockAdmin,
+      db: mockDb,
     });
 
     mockAccountRef.get.mockResolvedValue(mockAccountSnapshot);
@@ -97,11 +121,6 @@ describe('exportData job', () => {
       }
       return { get: jest.fn().mockResolvedValue({ docs: [] }) };
     });
-
-    // Setup storage mock
-    (admin.storage as jest.Mock).mockReturnValue({
-      bucket: jest.fn(() => bucket),
-    });
   });
 
   it('should successfully export data', async () => {
@@ -111,9 +130,12 @@ describe('exportData job', () => {
       userEmail: 'user@example.com',
     });
 
-    // Verify admin.firestore was called correctly
-    expect(admin.firestore().collection).toHaveBeenCalledWith('users');
-    expect(admin.firestore().collection('users').doc).toHaveBeenCalledWith('user1');
+    // Get the mocked initializeFirebase result for verification
+    const mockInitResult = (initializeFirebase as jest.Mock).mock.results[0].value;
+
+    // Verify database operations
+    expect(mockInitResult.db.collection).toHaveBeenCalledWith('users');
+    expect(mockInitResult.db.collection().doc).toHaveBeenCalledWith('user1');
 
     // Verify Firestore queries
     expect(mockAccountRef.collection).toHaveBeenCalledWith('meals');
@@ -123,9 +145,9 @@ describe('exportData job', () => {
     expect(fs.unlinkSync).toHaveBeenCalled();
 
     // Verify storage operations
-    expect(admin.storage().bucket).toHaveBeenCalled();
-    expect(admin.storage().bucket().upload).toHaveBeenCalled();
-    expect(admin.storage().bucket().file).toHaveBeenCalledWith(
+    expect(mockInitResult.admin.storage().bucket).toHaveBeenCalled();
+    expect(mockInitResult.admin.storage().bucket().upload).toHaveBeenCalled();
+    expect(mockInitResult.admin.storage().bucket().file).toHaveBeenCalledWith(
       expect.stringMatching(/users\/user1\/exports\/meals-.*\.csv/),
     );
 
@@ -174,9 +196,16 @@ describe('exportData job', () => {
   });
 
   it('should handle errors during execution', async () => {
-    // Force an error
-    (admin.firestore().collection as jest.Mock).mockImplementation(() => {
-      throw new Error('Test error');
+    // Force an error in the database operation
+    const mockDb = {
+      collection: jest.fn().mockImplementation(() => {
+        throw new Error('Test error');
+      }),
+    };
+
+    (initializeFirebase as jest.Mock).mockReturnValue({
+      admin: {},
+      db: mockDb,
     });
 
     // Call the function

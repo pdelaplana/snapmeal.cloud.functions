@@ -1,41 +1,32 @@
-import * as admin from 'firebase-admin';
+import { initializeFirebase } from '../../config/firebase';
 import { sendEmailNotification } from '../../helpers/sendEmail';
 import { deleteAccount } from '../../jobs/deleteAccount';
+
+// Mock the firebase config module
+jest.mock('../../config/firebase', () => {
+  const mockDb = {
+    collection: jest.fn(),
+  };
+
+  const mockAdmin = {
+    auth: jest.fn(),
+    storage: jest.fn(),
+  };
+
+  return {
+    initializeFirebase: jest.fn(() => ({
+      admin: mockAdmin,
+      db: mockDb,
+    })),
+  };
+});
 
 // Mock node:fs
 jest.mock('node:fs', () => ({
   existsSync: jest.fn().mockReturnValue(false), // Mock existsSync to return false (no service account file)
 }));
 
-// Mock firebase-admin
-jest.mock('firebase-admin', () => {
-  const mockBucket = {
-    deleteFiles: jest.fn().mockResolvedValue([]),
-  };
-
-  const mockStorage = {
-    bucket: jest.fn().mockReturnValue(mockBucket),
-  };
-
-  const mockAuth = {
-    deleteUser: jest.fn().mockResolvedValue({}),
-  };
-
-  const mockFirestore = {
-    collection: jest.fn().mockReturnThis(),
-    doc: jest.fn().mockReturnThis(),
-    get: jest.fn(),
-    delete: jest.fn().mockResolvedValue({}),
-  };
-
-  return {
-    firestore: jest.fn(() => mockFirestore),
-    storage: jest.fn(() => mockStorage),
-    auth: jest.fn(() => mockAuth),
-  };
-});
-
-// Mock firebase-functions params
+// Mock firebase-functions
 jest.mock('firebase-functions', () => ({
   params: {
     storageBucket: {
@@ -44,7 +35,12 @@ jest.mock('firebase-functions', () => ({
   },
 }));
 
-// Mock email sending
+// Mock firebase-functions params
+jest.mock('firebase-functions/params', () => ({
+  defineString: jest.fn((_name, config) => ({
+    value: jest.fn().mockReturnValue(config.default),
+  })),
+})); // Mock email sending
 jest.mock('../../helpers/sendEmail', () => ({
   sendEmailNotification: jest.fn().mockResolvedValue({}),
 }));
@@ -94,9 +90,30 @@ describe('deleteAccount job', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Setup mock Firestore responses
-    (admin.firestore().collection as jest.Mock).mockReturnValue({
-      doc: jest.fn().mockReturnValue(mockUserDocRef),
+    // Setup the initializeFirebase mock to return our test objects
+    const mockBucket = {
+      deleteFiles: jest.fn().mockResolvedValue([]),
+      name: 'default-bucket',
+    };
+
+    const mockDb = {
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockReturnValue(mockUserDocRef),
+      }),
+    };
+
+    const mockAdmin = {
+      auth: jest.fn().mockReturnValue({
+        deleteUser: jest.fn().mockResolvedValue({}),
+      }),
+      storage: jest.fn().mockReturnValue({
+        bucket: jest.fn().mockReturnValue(mockBucket),
+      }),
+    };
+
+    (initializeFirebase as jest.Mock).mockReturnValue({
+      admin: mockAdmin,
+      db: mockDb,
     });
 
     mockUserDocRef.get.mockResolvedValue(mockUserSnapshot);
@@ -112,18 +129,6 @@ describe('deleteAccount job', () => {
     });
 
     mockMealsCollection.get.mockResolvedValue(mockMealsSnapshot);
-
-    // Setup auth mock
-    (admin.auth as jest.Mock).mockReturnValue({
-      deleteUser: jest.fn().mockResolvedValue({}),
-    });
-
-    // Setup storage mock
-    (admin.storage as jest.Mock).mockReturnValue({
-      bucket: jest.fn().mockReturnValue({
-        deleteFiles: jest.fn().mockResolvedValue([]),
-      }),
-    });
   });
 
   it('should successfully delete account and all associated data', async () => {
@@ -133,9 +138,8 @@ describe('deleteAccount job', () => {
       userEmail: 'user@example.com',
     });
 
-    // Verify account lookup
-    expect(admin.firestore().collection).toHaveBeenCalledWith('users');
-    expect(admin.firestore().collection('users').doc).toHaveBeenCalledWith('user1');
+    // Verify account lookup (now through initializeFirebase db instance)
+    expect(mockUserDocRef.get).toHaveBeenCalled();
 
     // Verify subcollections were queried
     expect(mockUserDocRef.collection).toHaveBeenCalledWith('meals');
@@ -145,12 +149,15 @@ describe('deleteAccount job', () => {
     expect(mockMealsSnapshot.docs[1].ref.delete).toHaveBeenCalled();
     expect(mockUserDocRef.delete).toHaveBeenCalled();
 
+    // Get the mocked initializeFirebase result for verification
+    const mockInitResult = (initializeFirebase as jest.Mock).mock.results[0].value;
+
     // Verify authentication deletion
-    expect(admin.auth().deleteUser).toHaveBeenCalledWith('user1');
+    expect(mockInitResult.admin.auth().deleteUser).toHaveBeenCalledWith('user1');
 
     // Verify storage cleanup
-    expect(admin.storage().bucket).toHaveBeenCalled();
-    expect(admin.storage().bucket().deleteFiles).toHaveBeenCalledWith({
+    expect(mockInitResult.admin.storage().bucket).toHaveBeenCalledWith('test-bucket');
+    expect(mockInitResult.admin.storage().bucket().deleteFiles).toHaveBeenCalledWith({
       prefix: 'users/user1/',
     });
 
@@ -196,10 +203,31 @@ describe('deleteAccount job', () => {
   });
 
   it('should handle storage errors gracefully', async () => {
-    // Force a storage error but let the rest proceed
-    (admin.storage().bucket().deleteFiles as jest.Mock).mockRejectedValue(
-      new Error('Storage error'),
-    );
+    // Setup a new mock with storage error for this test
+    const mockBucket = {
+      deleteFiles: jest.fn().mockRejectedValue(new Error('Storage error')),
+      name: 'default-bucket',
+    };
+
+    const mockDb = {
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockReturnValue(mockUserDocRef),
+      }),
+    };
+
+    const mockAdmin = {
+      auth: jest.fn().mockReturnValue({
+        deleteUser: jest.fn().mockResolvedValue({}),
+      }),
+      storage: jest.fn().mockReturnValue({
+        bucket: jest.fn().mockReturnValue(mockBucket),
+      }),
+    };
+
+    (initializeFirebase as jest.Mock).mockReturnValue({
+      admin: mockAdmin,
+      db: mockDb,
+    });
 
     // Call the function
     const result = await deleteAccount({
@@ -212,9 +240,16 @@ describe('deleteAccount job', () => {
   });
 
   it('should handle errors during execution', async () => {
-    // Force an error in the main process
-    (admin.firestore().collection as jest.Mock).mockImplementation(() => {
-      throw new Error('Test error');
+    // Force an error in the database operation
+    const mockDb = {
+      collection: jest.fn().mockImplementation(() => {
+        throw new Error('Test error');
+      }),
+    };
+
+    (initializeFirebase as jest.Mock).mockReturnValue({
+      admin: {},
+      db: mockDb,
     });
 
     // Call the function
