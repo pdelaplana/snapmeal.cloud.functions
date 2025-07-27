@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as admin from 'firebase-admin';
 import { Firestore } from 'firebase-admin/firestore';
 import { defineString } from 'firebase-functions/params';
+import { params } from 'firebase-functions/v2';
 
 export const databaseId = defineString('DATABASE_ID', {
   default: 'development',
@@ -26,7 +27,7 @@ export const initializeFirebase = () => {
     currentDatabaseId = databaseId.value();
 
     // Initialize Firebase Admin SDK only once
-    if (admin.apps.length === 0) {
+    if (admin.apps?.length === 0) {
       const serviceAccountPath = './firebase-service-account.json';
 
       if (fs.existsSync(serviceAccountPath)) {
@@ -42,9 +43,8 @@ export const initializeFirebase = () => {
 
     console.log(`Firebase Admin SDK initialized successfully with database: ${currentDatabaseId}`);
 
-    // Get project ID from the initialized app
-    const app = admin.app();
-    const projectId = app.options.projectId;
+    // Get project ID from parameters
+    const projectId = params.projectID.value();
 
     if (!projectId) {
       throw new Error('Project ID not found in Firebase app configuration');
