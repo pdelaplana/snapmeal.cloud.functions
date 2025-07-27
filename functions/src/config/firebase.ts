@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as admin from 'firebase-admin';
-import { defineString } from 'firebase-functions/params';
 import { Firestore } from 'firebase-admin/firestore';
+import { defineString } from 'firebase-functions/params';
 
 export const databaseId = defineString('DATABASE_ID', {
   default: 'development',
@@ -11,7 +11,6 @@ export const storageBucket = defineString('STORAGE_BUCKET', {
   default: 'snapmeal-sa2e9.firebasestorage.app',
   description: 'The name of the Firebase Storage bucket',
 });
-
 
 let dbInstance: FirebaseFirestore.Firestore | undefined;
 let adminInstance: typeof admin | undefined;
@@ -43,9 +42,17 @@ export const initializeFirebase = () => {
 
     console.log(`Firebase Admin SDK initialized successfully with database: ${currentDatabaseId}`);
 
-    const dbInstance = new Firestore({
-      projectId: admin.app().options.projectId, // Get the project ID from your initialized Firebase app
-      databaseId: 'development', // **This is where you specify the named database!**
+    // Get project ID from the initialized app
+    const app = admin.app();
+    const projectId = app.options.projectId;
+
+    if (!projectId) {
+      throw new Error('Project ID not found in Firebase app configuration');
+    }
+
+    dbInstance = new Firestore({
+      projectId, // Get the project ID from your initialized Firebase app
+      databaseId: currentDatabaseId, // Use the actual environment variable value
       keyFilename: './firebase-service-account.json', // Use the service account file if it exists
     });
 
@@ -53,13 +60,11 @@ export const initializeFirebase = () => {
 
     adminInstance = admin;
     return { admin: adminInstance, db: dbInstance, currentDatabaseId };
-
   } catch (error) {
     console.error('Error initializing Firebase Admin SDK:', error);
     throw error;
   }
 };
-
 
 export const getCurrentDatabaseId = () => {
   return databaseId.value();
