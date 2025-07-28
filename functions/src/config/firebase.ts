@@ -28,28 +28,23 @@ export const initializeFirebase = () => {
       db: dbInstance,
       auth: authInstance,
       storage: storageInstance,
-      currentDatabaseId,
     };
   }
 
   try {
     currentDatabaseId = databaseId.value();
 
-    // Initialize Firebase Admin SDK only once
-    if (admin.apps?.length === 0) {
-      const serviceAccountPath = './firebase-service-account.json';
+    const serviceAccountPath = './firebase-service-account.json';
 
-      if (fs.existsSync(serviceAccountPath)) {
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccountPath),
-          storageBucket: storageBucket.value(),
-        });
-        console.log(`Using service account from file: ${serviceAccountPath}`);
-      } else {
-        admin.initializeApp();
-      }
+    if (fs.existsSync(serviceAccountPath)) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccountPath),
+        storageBucket: storageBucket.value(),
+      });
+      console.log(`Using service account from file: ${serviceAccountPath}`);
+    } else {
+      admin.initializeApp();
     }
-
     console.log(`Firebase Admin SDK initialized successfully with database: ${currentDatabaseId}`);
 
     // Get project ID from parameters
@@ -62,7 +57,7 @@ export const initializeFirebase = () => {
     dbInstance = new Firestore({
       projectId, // Get the project ID from your initialized Firebase app
       databaseId: currentDatabaseId, // Use the actual environment variable value
-      keyFilename: './firebase-service-account.json', // Use the service account file if it exists
+      keyFilename: serviceAccountPath, // Use the service account file if it exists
     });
 
     authInstance = admin.auth();
@@ -76,7 +71,6 @@ export const initializeFirebase = () => {
       db: dbInstance,
       auth: authInstance,
       storage: storageInstance,
-      currentDatabaseId,
     };
   } catch (error) {
     console.error('Error initializing Firebase Admin SDK:', error);
